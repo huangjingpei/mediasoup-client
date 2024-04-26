@@ -11,10 +11,10 @@ import androidx.lifecycle.Observer;
 
 import org.mediasoup.droid.Consumer;
 import org.mediasoup.droid.Logger;
-import org.mediasoup.droid.lib.lv.RoomStore;
-import org.mediasoup.droid.lib.model.Consumers;
-import org.mediasoup.droid.lib.model.Peer;
-import org.mediasoup.droid.lib.model.Peers;
+import com.mediasoup.msclient.lv.RoomStore;
+import com.mediasoup.msclient.model.Consumers;
+import com.mediasoup.msclient.model.Peer;
+import com.mediasoup.msclient.model.Peers;
 import org.webrtc.AudioTrack;
 import org.webrtc.VideoTrack;
 

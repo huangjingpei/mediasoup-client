@@ -9,10 +9,10 @@ import androidx.databinding.ObservableField;
 import androidx.lifecycle.LifecycleOwner;
 
 import org.mediasoup.droid.Producer;
-import org.mediasoup.droid.lib.RoomClient;
-import org.mediasoup.droid.lib.lv.RoomStore;
-import org.mediasoup.droid.lib.model.Me;
-import org.mediasoup.droid.lib.model.Producers;
+import com.mediasoup.msclient.RoomClient;
+import com.mediasoup.msclient.lv.RoomStore;
+import com.mediasoup.msclient.model.Me;
+import com.mediasoup.msclient.model.Producers;
 import org.webrtc.AudioTrack;
 import org.webrtc.VideoTrack;
 

@@ -6,8 +6,8 @@ import androidx.annotation.NonNull;
 import androidx.databinding.ObservableField;
 
 import org.json.JSONArray;
-import org.mediasoup.droid.lib.lv.RoomStore;
-import org.mediasoup.droid.lib.model.Info;
+import com.mediasoup.msclient.lv.RoomStore;
+import com.mediasoup.msclient.model.Info;
 import org.webrtc.AudioTrack;
 import org.webrtc.VideoTrack;
 

@@ -9,9 +9,9 @@ import androidx.databinding.ObservableField;
 import androidx.lifecycle.LifecycleOwner;
 
 import org.mediasoup.droid.demo.R;
-import org.mediasoup.droid.lib.RoomClient;
-import org.mediasoup.droid.lib.lv.RoomStore;
-import org.mediasoup.droid.lib.model.RoomInfo;
+import com.mediasoup.msclient.RoomClient;
+import com.mediasoup.msclient.lv.RoomStore;
+import com.mediasoup.msclient.model.RoomInfo;
 
 public class RoomProps extends EdiasProps {
 

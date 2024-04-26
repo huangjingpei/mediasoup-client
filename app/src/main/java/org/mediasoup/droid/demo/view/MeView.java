@@ -15,8 +15,8 @@ import androidx.databinding.DataBindingUtil;
 import org.mediasoup.droid.demo.R;
 import org.mediasoup.droid.demo.databinding.ViewMeBindingImpl;
 import org.mediasoup.droid.demo.vm.MeProps;
-import org.mediasoup.droid.lib.PeerConnectionUtils;
-import org.mediasoup.droid.lib.RoomClient;
+import com.mediasoup.msclient.PeerConnectionUtils;
+import com.mediasoup.msclient.RoomClient;
 
 public class MeView extends RelativeLayout {
 

@@ -1,7 +1,7 @@
 package org.mediasoup.droid.demo;
 
 import static org.mediasoup.droid.demo.utils.ClipboardCopy.clipboardCopy;
-import static org.mediasoup.droid.lib.Utils.getRandomString;
+import static com.mediasoup.msclient.Utils.getRandomString;
 
 import android.Manifest;
 import android.content.Intent;
@@ -34,13 +34,13 @@ import org.mediasoup.droid.demo.databinding.ActivityRoomBinding;
 import org.mediasoup.droid.demo.vm.EdiasProps;
 import org.mediasoup.droid.demo.vm.MeProps;
 import org.mediasoup.droid.demo.vm.RoomProps;
-import org.mediasoup.droid.lib.PeerConnectionUtils;
-import org.mediasoup.droid.lib.RoomClient;
-import org.mediasoup.droid.lib.RoomOptions;
-import org.mediasoup.droid.lib.lv.RoomStore;
-import org.mediasoup.droid.lib.model.Me;
-import org.mediasoup.droid.lib.model.Notify;
-import org.mediasoup.droid.lib.model.Peer;
+import com.mediasoup.msclient.PeerConnectionUtils;
+import com.mediasoup.msclient.RoomClient;
+import com.mediasoup.msclient.RoomOptions;
+import com.mediasoup.msclient.lv.RoomStore;
+import com.mediasoup.msclient.model.Me;
+import com.mediasoup.msclient.model.Notify;
+import com.mediasoup.msclient.model.Peer;
 
 import java.util.List;
 

@@ -14,8 +14,8 @@ import androidx.databinding.DataBindingUtil;
 import org.mediasoup.droid.demo.R;
 import org.mediasoup.droid.demo.databinding.ViewPeerBinding;
 import org.mediasoup.droid.demo.vm.PeerProps;
-import org.mediasoup.droid.lib.PeerConnectionUtils;
-import org.mediasoup.droid.lib.RoomClient;
+import com.mediasoup.msclient.PeerConnectionUtils;
+import com.mediasoup.msclient.RoomClient;
 
 public class PeerView extends RelativeLayout {
 

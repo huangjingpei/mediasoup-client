@@ -8,7 +8,7 @@ import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
-import org.mediasoup.droid.lib.lv.RoomStore;
+import com.mediasoup.msclient.lv.RoomStore;
 
 import java.lang.reflect.InvocationTargetException;
 
