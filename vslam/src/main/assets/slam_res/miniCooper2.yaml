@@ -1,0 +1,12 @@
+%YAML:1.0
+
+Settings.initPercentageGd:0.85
+Settings.runPercentageGd:0.4
+Settings.maskSize:5
+Settings.maskNumber:180
+Settings.range:8
+Settings.threshold:30000
+Settings.minContrast:0.5
+Settings.maxContrast:1.5
+Settings.sampleStep:8
+Settings.initPose:[0.986944, -0.157578, 0.0333119, -0.408103, -0.0212342, -0.332327, -0.942925, 0.385664, 0.159655, 0.929907, -0.331335, 2.92728]

@@ -6,6 +6,9 @@ import android.util.Log;
 
 import androidx.annotation.MainThread;
 
+import com.mediasoup.msclient.vslam.SlamAlgInstance;
+import com.mediasoup.msclient.vslam.SlamProcessListener;
+
 import org.mediasoup.droid.Logger;
 import org.webrtc.AudioSource;
 import org.webrtc.AudioTrack;
@@ -20,20 +23,25 @@ import org.webrtc.MediaConstraints;
 import org.webrtc.PeerConnectionFactory;
 import org.webrtc.SurfaceTextureHelper;
 import org.webrtc.ThreadUtils;
+import org.webrtc.VideoCapturer;
 import org.webrtc.VideoDecoderFactory;
 import org.webrtc.VideoEncoderFactory;
+import org.webrtc.VideoFrame;
 import org.webrtc.VideoSource;
 import org.webrtc.VideoTrack;
 import org.webrtc.audio.AudioDeviceModule;
 import org.webrtc.audio.JavaAudioDeviceModule;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
 @SuppressWarnings("WeakerAccess")
-public class PeerConnectionUtils {
+public class PeerConnectionUtils implements ExternalVideoCaptureHandler, SlamProcessListener {
 
   private static final String TAG = "PeerConnectionUtils";
 
   private static String mPreferCameraFace;
-  private static EglBase mEglBase = EglBase.create();
+  private static final EglBase mEglBase = EglBase.create();
 
   public static EglBase.Context getEglContext() {
     return mEglBase.getEglBaseContext();
@@ -48,7 +56,9 @@ public class PeerConnectionUtils {
 
   private AudioSource mAudioSource;
   private VideoSource mVideoSource;
-  private CameraVideoCapturer mCamCapture;
+  private VideoCapturer mCamCapture;
+
+  private String mVideoInputFile;
 
   public PeerConnectionUtils() {
     mThreadChecker = new ThreadUtils.ThreadChecker();
@@ -74,6 +84,7 @@ public class PeerConnectionUtils {
             .setVideoEncoderFactory(encoderFactory)
             .setVideoDecoderFactory(decoderFactory)
             .createPeerConnectionFactory();
+
   }
 
   private AudioDeviceModule createJavaAudioDevice(Context appContext) {
@@ -139,67 +150,77 @@ public class PeerConnectionUtils {
   private void createCamCapture(Context context) {
     Logger.d(TAG, "createCamCapture()");
     mThreadChecker.checkIsOnValidThread();
-    boolean isCamera2Supported = Camera2Enumerator.isSupported(context);
-    CameraEnumerator cameraEnumerator;
+    if (mVideoInputFile == null) {
+        boolean isCamera2Supported = Camera2Enumerator.isSupported(context);
+        CameraEnumerator cameraEnumerator;
 
-    if (isCamera2Supported) {
-      cameraEnumerator = new Camera2Enumerator(context);
+        if (isCamera2Supported) {
+            cameraEnumerator = new Camera2Enumerator(context);
+        } else {
+            cameraEnumerator = new Camera1Enumerator();
+        }
+        final String[] deviceNames = cameraEnumerator.getDeviceNames();
+        for (String deviceName : deviceNames) {
+            boolean needFrontFacing = "front".endsWith(mPreferCameraFace);
+            String selectedDeviceName = null;
+            if (needFrontFacing) {
+                if (cameraEnumerator.isFrontFacing(deviceName)) {
+                    selectedDeviceName = deviceName;
+                }
+            } else {
+                if (!cameraEnumerator.isFrontFacing(deviceName)) {
+                    selectedDeviceName = deviceName;
+                }
+            }
+
+            if (!TextUtils.isEmpty(selectedDeviceName)) {
+                mCamCapture =
+                        cameraEnumerator.createCapturer(
+                                selectedDeviceName,
+                                new CameraVideoCapturer.CameraEventsHandler() {
+                                    @Override
+                                    public void onCameraError(String s) {
+                                        Logger.e(TAG, "onCameraError, " + s);
+                                    }
+
+                                    @Override
+                                    public void onCameraDisconnected() {
+                                        Logger.w(TAG, "onCameraDisconnected");
+                                    }
+
+                                    @Override
+                                    public void onCameraFreezed(String s) {
+                                        Logger.w(TAG, "onCameraFreezed, " + s);
+                                    }
+
+                                    @Override
+                                    public void onCameraOpening(String s) {
+                                        Logger.d(TAG, "onCameraOpening, " + s);
+                                    }
+
+                                    @Override
+                                    public void onFirstFrameAvailable() {
+                                        Logger.d(TAG, "onFirstFrameAvailable");
+                                    }
+
+                                    @Override
+                                    public void onCameraClosed() {
+                                        Logger.d(TAG, "onCameraClosed");
+                                    }
+                                });
+                break;
+            }
+        }
     } else {
-      cameraEnumerator = new Camera1Enumerator();
-    }
-    final String[] deviceNames = cameraEnumerator.getDeviceNames();
-    for (String deviceName : deviceNames) {
-      boolean needFrontFacing = "front".endsWith(mPreferCameraFace);
-      String selectedDeviceName = null;
-      if (needFrontFacing) {
-        if (cameraEnumerator.isFrontFacing(deviceName)) {
-          selectedDeviceName = deviceName;
+        try {
+            mCamCapture = new ExternalFileCapture(mVideoInputFile);
+            SlamAlgInstance.getInstance().setNeedProcess(true);
+            SlamAlgInstance.getInstance().setProcessListener(this);
+            ((ExternalFileCapture)mCamCapture).setExternalVideoFrameObserver(this);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-      } else {
-        if (!cameraEnumerator.isFrontFacing(deviceName)) {
-          selectedDeviceName = deviceName;
-        }
-      }
-
-      if (!TextUtils.isEmpty(selectedDeviceName)) {
-        mCamCapture =
-            cameraEnumerator.createCapturer(
-                selectedDeviceName,
-                new CameraVideoCapturer.CameraEventsHandler() {
-                  @Override
-                  public void onCameraError(String s) {
-                    Logger.e(TAG, "onCameraError, " + s);
-                  }
-
-                  @Override
-                  public void onCameraDisconnected() {
-                    Logger.w(TAG, "onCameraDisconnected");
-                  }
-
-                  @Override
-                  public void onCameraFreezed(String s) {
-                    Logger.w(TAG, "onCameraFreezed, " + s);
-                  }
-
-                  @Override
-                  public void onCameraOpening(String s) {
-                    Logger.d(TAG, "onCameraOpening, " + s);
-                  }
-
-                  @Override
-                  public void onFirstFrameAvailable() {
-                    Logger.d(TAG, "onFirstFrameAvailable");
-                  }
-
-                  @Override
-                  public void onCameraClosed() {
-                    Logger.d(TAG, "onCameraClosed");
-                  }
-                });
-        break;
-      }
     }
-
     if (mCamCapture == null) {
       throw new IllegalStateException("Failed to create Camera Capture");
     }
@@ -209,7 +230,9 @@ public class PeerConnectionUtils {
     Logger.d(TAG, "switchCam()");
     mThreadChecker.checkIsOnValidThread();
     if (mCamCapture != null) {
-      mCamCapture.switchCamera(switchHandler);
+        if (mCamCapture instanceof CameraVideoCapturer) {
+            ((CameraVideoCapturer)mCamCapture).switchCamera(switchHandler);
+        }
     }
   }
 
@@ -277,4 +300,57 @@ public class PeerConnectionUtils {
       mPeerConnectionFactory = null;
     }
   }
+
+  public void setVideoInputFile(String inputFile) {
+      mVideoInputFile = inputFile;
+  }
+
+    @Override
+    public void onVideoFrame(VideoFrame frame) {
+
+      // Copy i420 buffer into byte array
+        VideoFrame.I420Buffer i420 = frame.getBuffer().toI420();
+        int height = i420.getHeight();
+        int width = i420.getWidth();
+        byte[] frameBuffer = new byte[width * height * 3 / 2];
+        ByteBuffer yBuffer = i420.getDataY();
+        ByteBuffer uBuffer = i420.getDataU();
+        ByteBuffer vBuffer = i420.getDataV();
+        int yStride = i420.getStrideY();
+        int uStride = i420.getStrideU();
+        int vStride = i420.getStrideV();
+
+        //Y Plane
+        yBuffer.get(frameBuffer, 0, height * width);
+
+        int uOffset = width * height;
+        int vOffset = width * height * 5 / 4;
+        //U Plane
+        uBuffer.get(frameBuffer, 0, width * height/4);
+        //V Plane
+        vBuffer.get(frameBuffer, 0, width * height/4);
+
+        i420.release();
+        SlamAlgInstance.getInstance().onNewFrame(frameBuffer, frame.getRotatedWidth(), frame.getRotatedHeight());
+    }
+
+    @Override
+    public void onProcess(float[] pose, int state) {
+
+    }
+
+    @Override
+    public void onPointCloud(float[] points, boolean state) {
+
+    }
+
+    @Override
+    public void setWidthAndHeight(int width, int height) {
+
+    }
+
+    @Override
+    public void onDebugInfo(String fps, String processTime, boolean isLost) {
+        Log.e(TAG, "fps: " + fps + " processTime " + processTime + " isLost " + isLost);
+    }
 }

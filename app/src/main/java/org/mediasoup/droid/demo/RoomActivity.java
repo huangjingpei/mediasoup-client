@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,6 +25,9 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.hiar.sdk.vslam.HiarSlamInitType;
+import com.hiar.sdk.vslam.HiarSlamMode;
+import com.mediasoup.msclient.vslam.SlamAlgInstance;
 import com.nabinbhandari.android.permissions.PermissionHandler;
 import com.nabinbhandari.android.permissions.Permissions;
 
@@ -31,6 +35,8 @@ import org.mediasoup.droid.Logger;
 import org.mediasoup.droid.MediasoupClient;
 import org.mediasoup.droid.demo.adapter.PeerAdapter;
 import org.mediasoup.droid.demo.databinding.ActivityRoomBinding;
+import org.mediasoup.droid.demo.utils.FilePath;
+import org.mediasoup.droid.demo.utils.FileUtil;
 import org.mediasoup.droid.demo.vm.EdiasProps;
 import org.mediasoup.droid.demo.vm.MeProps;
 import org.mediasoup.droid.demo.vm.RoomProps;
@@ -42,12 +48,15 @@ import com.mediasoup.msclient.model.Me;
 import com.mediasoup.msclient.model.Notify;
 import com.mediasoup.msclient.model.Peer;
 
+import java.io.File;
 import java.util.List;
 
 public class RoomActivity extends AppCompatActivity {
 
   private static final String TAG = RoomActivity.class.getSimpleName();
   private static final int REQUEST_CODE_SETTING = 1;
+
+  private static  final String assetDirName = "slam_res";
 
   private String mRoomId, mPeerId, mDisplayName;
   private boolean mForceH264, mForceVP9;
@@ -63,6 +72,20 @@ public class RoomActivity extends AppCompatActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     mBinding = DataBindingUtil.setContentView(this, R.layout.activity_room);
+    String slamResPath = getExternalCacheDir().getPath() + File.separator + assetDirName;
+    FilePath.createDirFilePath(slamResPath);
+    FileUtil.CopyAssets2SDcard(RoomActivity.this,
+            assetDirName, slamResPath+File.separator, false);
+    Log.e("HUANG", slamResPath);
+    //[com.hiscene.hiarslamdemo.GuideActivity@73f9453], nInitType = [0], nMode = [2], caoName = [miniCooper2.ham], dbFileName = [HiARRecog.db], datFileName = [t2018-11-08 17-35-32.dat]
+
+    SlamAlgInstance.getInstance().create(HiarSlamInitType.INIT_SINGLE,
+            HiarSlamMode.BALANCE,
+            slamResPath,
+            "miniCooper2.ham",
+            "HiARRecog.db",
+            "t2018-11-08 17-35-32.dat"
+            );
     createRoom();
     checkPermission();
   }
@@ -88,7 +111,7 @@ public class RoomActivity extends AppCompatActivity {
     mForceH264 = preferences.getBoolean("forceH264", false);
     mForceVP9 = preferences.getBoolean("forceVP9", false);
     if (TextUtils.isEmpty(mRoomId)) {
-      mRoomId = getRandomString(8);
+      mRoomId = "ylpq6zan";//getRandomString(8);
       preferences.edit().putString("roomId", mRoomId).apply();
     }
     if (TextUtils.isEmpty(mPeerId)) {
@@ -115,9 +138,10 @@ public class RoomActivity extends AppCompatActivity {
   }
 
   private void initRoomClient() {
-    mRoomClient =
-        new RoomClient(
-            this, mRoomStore, mRoomId, mPeerId, mDisplayName, mForceH264, mForceVP9, mOptions);
+    String videoInputFile = null;
+    videoInputFile = getExternalCacheDir().getPath() + File.separator + assetDirName + File.separator + "reference_video_640x360_30fps.y4m";
+    mRoomClient =new RoomClient(
+            this, mRoomStore, mRoomId, mPeerId, mDisplayName, mForceH264, mForceVP9, mOptions, videoInputFile);
   }
 
   private void initViewModel() {

@@ -27,9 +27,14 @@ import org.mediasoup.droid.Producer;
 import org.mediasoup.droid.RecvTransport;
 import org.mediasoup.droid.SendTransport;
 import org.mediasoup.droid.Transport;
+
+import com.hiar.sdk.vslam.HiarSlamInitType;
+import com.hiar.sdk.vslam.HiarSlamMode;
 import com.mediasoup.msclient.lv.RoomStore;
 import com.mediasoup.msclient.model.Peer;
 import com.mediasoup.msclient.socket.WebSocketTransport;
+import com.mediasoup.msclient.vslam.SlamAlgInstance;
+
 import org.protoojs.droid.Message;
 import org.protoojs.droid.ProtooException;
 import org.webrtc.AudioTrack;
@@ -98,9 +103,10 @@ public class RoomClient extends RoomMessageHandler {
   // Share preferences
   private SharedPreferences mPreferences;
 
+
   public RoomClient(
       Context context, RoomStore roomStore, String roomId, String peerId, String displayName) {
-    this(context, roomStore, roomId, peerId, displayName, false, false, null);
+    this(context, roomStore, roomId, peerId, displayName, false, false, null, null);
   }
 
   public RoomClient(
@@ -110,7 +116,7 @@ public class RoomClient extends RoomMessageHandler {
       String peerId,
       String displayName,
       RoomOptions options) {
-    this(context, roomStore, roomId, peerId, displayName, false, false, options);
+    this(context, roomStore, roomId, peerId, displayName, false, false, options, null);
   }
 
   public RoomClient(
@@ -121,7 +127,8 @@ public class RoomClient extends RoomMessageHandler {
       String displayName,
       boolean forceH264,
       boolean forceVP9,
-      RoomOptions options) {
+      RoomOptions options,
+      String videoInputFile) {
     super(roomStore);
     this.mContext = context.getApplicationContext();
     this.mOptions = options == null ? new RoomOptions() : options;
@@ -139,6 +146,14 @@ public class RoomClient extends RoomMessageHandler {
     mWorkHandler = new Handler(handlerThread.getLooper());
     mMainHandler = new Handler(Looper.getMainLooper());
     mWorkHandler.post(() -> mPeerConnectionUtils = new PeerConnectionUtils());
+
+    mWorkHandler.post(new Runnable() {
+        @Override
+        public void run() {
+            mPeerConnectionUtils = new PeerConnectionUtils();
+            mPeerConnectionUtils.setVideoInputFile(videoInputFile);
+        }
+    });
   }
 
   @Async
